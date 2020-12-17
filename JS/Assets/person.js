@@ -6,7 +6,7 @@ export default class person {
         this.#torso = () => {
             c.beginPath();
             c.rect(this.x, this.y, this.width, this.height);
-            c.fillStyle = this.#torsoColor;
+            c.fillStyle = this.torsoColor;
             c.fill();
             c.closePath();
         };
@@ -14,13 +14,13 @@ export default class person {
             //?Left leg
             c.beginPath();
             c.rect(this.x, this.y + this.height, this.width / 6, this.height / 2);
-            c.fillStyle = this.#legsColor;
+            c.fillStyle = this.legsColor;
             c.fill();
             c.closePath();
             //?Right leg
             c.beginPath();
             c.rect(this.x + this.width * 5 / 6, this.y + this.height, this.width / 6, this.height / 2);
-            c.fillStyle = this.#legsColor;
+            c.fillStyle = this.legsColor;
             c.fill();
             c.closePath();
             this.feet = this.y + this.height * 3 / 2;
@@ -28,12 +28,12 @@ export default class person {
         this.#face = () => {
             c.beginPath();
             c.rect(this.x, this.y - this.height / 2, this.width, this.height / 2);
-            c.fillStyle = this.#headColor;
+            c.fillStyle = this.headColor;
             c.fill();
             c.closePath();
         };
         this.#iris = (irisColor) => {
-            if (this.#rotate) {
+            if (this.rotate) {
                 c.beginPath();
                 c.arc(this.x + this.width * 1 / 6, this.y - this.height / 3, 10, 0, Pi * 2, false);
                 c.fillStyle = irisColor;
@@ -49,7 +49,7 @@ export default class person {
             }
         };
         this.#pupil = (pupilColor) => {
-            if (this.#rotate) {
+            if (this.rotate) {
                 c.beginPath();
                 c.arc(this.x + this.width * 1 / 6 - 2, this.y - this.height / 3, 4, 0, Pi * 2, false);
                 c.fillStyle = pupilColor;
@@ -65,8 +65,8 @@ export default class person {
             }
         };
         this.#eyelid = (eyelidColor) => {
-            if (this.#blink) {
-                if (this.#rotate) {
+            if (this.blink) {
+                if (this.rotate) {
                     c.beginPath();
                     c.arc(this.x + this.width * 1 / 6, this.y - this.height / 3, 10, 0, Pi * 2, false);
                     c.fillStyle = eyelidColor;
@@ -83,7 +83,7 @@ export default class person {
             }
         };
         this.#smile = (smileColor) => {
-            if (this.#rotate) {
+            if (this.rotate) {
                 c.beginPath();
                 c.moveTo(this.x, this.y - this.height / 10);
                 c.lineTo(this.x + this.width * 1 / 6 + 5, this.y - this.height / 10);
@@ -119,18 +119,24 @@ export default class person {
             this.#torso();
             this.#legs();
         };
-        this.#gravity = () => {
-            if (this.fall) {
-                //console.log('parent', this.fall)
+        this.gravity = ({ fall, move }) => {
+            this.allowMovement = move;
+            if (fall) {
                 if (this.feet === innerHeight / 2 + this.height) {
+                    this.falling = false;
                     return false;
                 }
                 else if (this.feet < innerHeight / 2 + this.height) {
-                    this.y += this.#g;
+                    this.falling = true;
+                    this.y += this.g;
                 }
                 else {
+                    this.falling = false;
                     this.feet = innerHeight / 2 + this.height;
                 }
+            }
+            else {
+                this.falling = false;
             }
             //console.log('gravity running');
         };
@@ -142,74 +148,66 @@ export default class person {
                 this.x = 0;
             }
         };
-        this.move = () => {
-            window.addEventListener('keydown', e => {
-                if (e.key == 'ArrowLeft') {
-                    this.#rotate = true;
-                    if (this.#velocity <= this.#displacement) {
-                        this.#velocity += 0.05;
+        this.move = ({ move = true }) => {
+            if (move) {
+                window.addEventListener('keydown', e => {
+                    if (e.key == 'ArrowLeft') {
+                        this.rotate = true;
+                        if (this.velocity <= this.displacement) {
+                            this.velocity += 0.05;
+                        }
+                        else {
+                            this.velocity = this.displacement;
+                        }
+                        this.x -= this.displacement + this.velocity;
+                        this.#bound();
+                        e.stopImmediatePropagation();
                     }
-                    else {
-                        this.#velocity = this.#displacement;
+                    if (e.key == 'ArrowRight') {
+                        this.rotate = false;
+                        if (this.velocity <= this.displacement) {
+                            this.velocity += 0.05;
+                        }
+                        else {
+                            this.velocity = this.displacement;
+                        }
+                        this.x += this.displacement + this.velocity;
+                        this.#bound();
+                        e.stopImmediatePropagation();
                     }
-                    this.x -= this.#displacement + this.#velocity;
-                    this.#bound();
-                    e.stopImmediatePropagation();
-                }
-                if (e.key == 'ArrowRight') {
-                    this.#rotate = false;
-                    if (this.#velocity <= this.#displacement) {
-                        this.#velocity += 0.05;
+                    if (e.key == 'ArrowUp') {
+                        if (!this.falling) {
+                            this.y -= this.jumpValue;
+                        }
+                        e.stopImmediatePropagation();
                     }
-                    else {
-                        this.#velocity = this.#displacement;
-                    }
-                    this.x += this.#displacement + this.#velocity;
-                    this.#bound();
-                    e.stopImmediatePropagation();
-                }
-                if (e.key == 'ArrowUp') {
-                    if (this.feet === innerHeight / 2 + this.height) {
-                        this.y -= this.jumpValue;
-                    }
-                    e.stopImmediatePropagation();
-                }
-            });
+                });
+            }
             window.addEventListener('keyup', () => {
-                this.#velocity = 0;
+                this.velocity = 0;
             });
             this.#render();
-            this.#gravity();
         };
         this.width = innerWidth / 25;
         this.height = innerHeight / 8;
         this.x = innerWidth / 2 - this.width / 2;
         this.y = innerHeight / 2 - this.height / 2;
-        this.#torsoColor = torso;
-        this.#legsColor = legs;
-        this.#headColor = head;
-        this.#rotate = false;
-        this.#displacement = 5;
-        this.#g = 4;
-        this.jumpValue = 100;
-        this.#velocity = 0;
-        this.#blink = false;
-        this.#blinkInterval = 600;
-        this.fall = true;
-        this.feet = this.y + this.height * 3 / 2;
+        this.torsoColor = torso;
+        this.legsColor = legs;
+        this.headColor = head;
+        this.rotate = false;
+        this.displacement = 5;
+        this.g = 4;
+        this.jumpValue = 150;
+        this.velocity = 0;
+        this.blink = false;
+        this.blinkInterval = 600;
+        this.falling = false;
+        this.allowMovement = true;
         setInterval(() => {
-            this.#blink = !this.#blink;
-        }, this.#blinkInterval);
+            this.blink = !this.blink;
+        }, this.blinkInterval);
     }
-    #torsoColor;
-    #legsColor;
-    #headColor;
-    #rotate;
-    #velocity;
-    #displacement;
-    #g;
-    #blink;
-    #blinkInterval;
     #torso;
     #legs;
     #face;
@@ -219,6 +217,5 @@ export default class person {
     #smile;
     #head;
     #render;
-    #gravity;
     #bound;
 }

@@ -10,25 +10,28 @@ export default class block extends person {
             c.fillStyle = this.#blockColor;
             c.fill();
         };
-        this.base = () => {
-            // if (this.feet === this.y2 && (this.x >= this.x2 || this.x <= this.x2 + this.size)) {
-            //     alert('yup')
-            //     this.fall = false;
-            // }
-            console.log(this.feet, this.y2, this.y + this.height * 3 / 2);
-            if (this.feet == Math.floor(this.y2)) {
-                console.log('yo');
+        this.base = ({ feet, x }) => {
+            if ((feet <= this.y2 + this.g / 2 && feet >= this.y2 - this.g / 2) && (x + this.width >= this.x2 && x <= this.x2 + this.size)) {
+                this.fall = false;
             }
             else {
                 this.fall = true;
             }
-            //console.log('child', this.fall)
+            if ((Math.floor(x - 2.5) == Math.floor(this.x2 + this.size) || Math.floor(x + this.width + 2.5) == Math.floor(this.x2))) {
+                console.log('Heck');
+                this.allowMove = false;
+            }
+            else {
+                this.allowMove = true;
+                console.log(Math.floor(x + this.width + 2.5), Math.floor(this.x2));
+            }
         };
         this.#blockColor = blockColor;
-        this.#distanceFromCenter = disFromCenter;
-        this.x2 = innerWidth * (1 / 2 + this.#distanceFromCenter);
-        this.y2 = innerHeight / 2 + this.height - this.jumpValue * 3 / 4;
-        this.size = this.jumpValue * 3 / 4;
+        this.x2 = innerWidth * (1 / 2 + disFromCenter);
+        this.y2 = innerHeight / 2 + this.height - this.jumpValue * 3 / 5;
+        this.size = this.jumpValue * 3 / 5;
+        this.fall = true;
+        this.allowMove = true;
     }
     #blockColor;
     #distanceFromCenter;
